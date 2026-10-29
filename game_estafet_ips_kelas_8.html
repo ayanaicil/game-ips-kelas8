@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estafet IPS Nusantara - Game Interaktif Kelas 8</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        amberGold: '#f59e0b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* Screen Transitions */
+        .screen-fade {
+            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+        }
+        .screen-hidden {
+            opacity: 0;
+            transform: translateY(15px) scale(0.98);
+            pointer-events: none;
+            position: absolute;
+            width: 100%;
+            visibility: hidden;
+        }
+        .screen-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            visibility: visible;
+        }
+
+        /* Question & Level Change Animations */
+        @keyframes popIn {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop-in {
+            animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Running Track Canvas styling */
+        #gameCanvas {
+            width: 100%;
+            height: 280px;
+            background: linear-gradient(to bottom, #38bdf8 0%, #7dd3fc 40%, #22c55e 40%, #15803d 50%);
+            border-radius: 1rem;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        @media (min-width: 768px) {
+            #gameCanvas {
+                height: 320px;
+            }
+        }
+
+        /* Certificate Print Styling */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #certificateView, #certificateView * {
+                visibility: visible;
+            }
+            #certificateView {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 20px;
+                box-shadow: none;
+                border: 8px solid #0284c7;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* Pulsing & Glow effects */
+        .glow-button {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+        }
+        .glow-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.6);
+        }
+        .glow-button:active {
+            transform: translateY(1px);
+        }
+
+        .option-card {
+            transition: all 0.2s ease;
+        }
+        .option-card:hover {
+            transform: translateX(4px);
+            border-color: #38bdf8;
+            background-color: rgba(56, 189, 248, 0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-slate-950 text-slate-100">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/30">
+                    <i class="fa-solid fa-person-running text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base md:text-lg bg-gradient-to-r from-sky-400 to-indigo-300 bg-clip-text text-transparent">
+                        ESTAFET IPS NUSANTARA
+                    </h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Materi IPS Kelas 8 • Kondisi Geografis & Bangsa Asing</p>
+                </div>
+            </div>
+
+            <!-- Audio & Settings Control -->
+            <div class="flex items-center space-x-2">
+                <button id="bgmToggleBtn" onclick="toggleBGM()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-400 transition-colors border border-slate-700" title="Musik Latar">
+                    <i id="bgmIcon" class="fa-solid fa-music"></i>
+                </button>
+                <button id="sfxToggleBtn" onclick="toggleSFX()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 transition-colors border border-slate-700" title="Efek Suara">
+                    <i id="sfxIcon" class="fa-solid fa-volume-high"></i>
+                </button>
+                <button onclick="openConfigModal()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 transition-colors border border-slate-700" title="Pengaturan Webhook Spreadsheet">
+                    <i class="fa-solid fa-file-excel"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container Frame -->
+    <main class="max-w-4xl w-full mx-auto p-4 flex-grow flex flex-col justify-center my-4 relative">
+
+        <!-- 1. SCREEN: REGISTRATION & CHARACTER SELECTION -->
+        <div id="screenStart" class="screen-fade screen-visible bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-60 h-60 bg-sky-500/10 rounded-full blur-3xl"></div>
+            
+            <div class="text-center max-w-xl mx-auto mb-8">
+                <span class="px-3 py-1 bg-sky-500/10 text-sky-400 rounded-full text-xs font-bold uppercase tracking-wider border border-sky-500/20">
+                    Game Interaktif Estafet
+                </span>
+                <h2 class="text-2xl md:text-3xl font-black mt-3 text-white">Petualangan Pelari Nusantara</h2>
+                <p class="text-slate-400 text-sm mt-2">
+                    Selesaikan 15 soal dalam 3 level estafet IPS Kelas 8! Setiap soal memiliki batas waktu <strong>1 Menit 30 Detik</strong>.
+                </p>
+            </div>
+
+            <form id="startForm" onsubmit="handleStartGame(event)" class="space-y-6 max-w-lg mx-auto">
+                <!-- Identity Inputs -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Nama Lengkap Siswa</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-user absolute left-4 top-3.5 text-slate-500"></i>
+                            <input type="text" id="inputStudentName" required oninput="playTypingSound()" placeholder="Masukkan nama lengkapmu..." class="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-11 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Kelas</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-graduation-cap absolute left-4 top-3.5 text-slate-500"></i>
+                            <input type="text" id="inputStudentClass" required oninput="playTypingSound()" placeholder="Contoh: 8A" class="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-11 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 text-sm transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Character Selection -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3 text-center">Pilih Karakter Pelari Estafet Utama</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Boy Character Option -->
+                        <div onclick="selectCharacter('boy')" id="charCardBoy" class="cursor-pointer border-2 border-sky-500 bg-sky-950/40 rounded-2xl p-4 text-center transition-all hover:scale-105 relative">
+                            <div class="w-20 h-20 mx-auto mb-2 rounded-2xl bg-sky-500/20 flex items-center justify-center overflow-hidden border-2 border-sky-400">
+                                <img src="https://ibb.co.com/NdXMgKr3" alt="Boy Character" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100x100/0284c7/fff?text=BOY'">
+                            </div>
+                            <span class="font-extrabold text-sm text-sky-300 block">BOY (Laki-laki)</span>
+                            <span class="text-xs text-slate-400">Pelari Cepat</span>
+                            <div id="checkBoy" class="absolute top-2 right-2 w-6 h-6 bg-sky-500 rounded-full flex items-center justify-center text-xs text-white">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                        </div>
+
+                        <!-- Girl Character Option -->
+                        <div onclick="selectCharacter('girl')" id="charCardGirl" class="cursor-pointer border-2 border-slate-700 bg-slate-800/40 rounded-2xl p-4 text-center transition-all hover:scale-105 relative">
+                            <div class="w-20 h-20 mx-auto mb-2 rounded-2xl bg-pink-500/20 flex items-center justify-center overflow-hidden border-2 border-pink-400">
+                                <img src="https://ibb.co.com/6M24jZH" alt="Girl Character" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100x100/ec4899/fff?text=GIRL'">
+                            </div>
+                            <span class="font-extrabold text-sm text-pink-300 block">GIRL (Perempuan)</span>
+                            <span class="text-xs text-slate-400">Pelari Tangguh</span>
+                            <div id="checkGirl" class="absolute top-2 right-2 w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center text-xs text-white hidden">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" onclick="playClickSound()" class="w-full py-4 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-extrabold text-lg rounded-xl glow-button flex items-center justify-center space-x-2 shadow-lg shadow-sky-500/25">
+                    <span>MULAI ESTAFET SEKARANG</span>
+                    <i class="fa-solid fa-flag-checkered text-amber-300"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- 2. SCREEN: GAMEPLAY & CANVASES -->
+        <div id="screenGame" class="screen-fade screen-hidden space-y-4">
+            
+            <!-- Level Indicator Header -->
+            <div class="flex flex-wrap justify-between items-center bg-slate-900 border border-slate-800 rounded-2xl p-4 gap-2 shadow-lg">
+                <div>
+                    <span id="levelBadge" class="px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full text-xs font-bold uppercase tracking-wider">
+                        LEVEL 1
+                    </span>
+                    <h3 id="levelTitle" class="text-base font-bold text-slate-200 mt-1">Interaksi dengan Bangsa Asing</h3>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <!-- Questions Counter -->
+                    <div class="text-right">
+                        <p class="text-xs text-slate-400">Pos Estafet</p>
+                        <p class="text-lg font-black text-sky-400"><span id="currentQIndexText">1</span> / <span id="totalQIndexText">30</span></p>
+                    </div>
+
+                    <!-- Timer Badge (Updated 90s Format) -->
+                    <div class="bg-slate-950 border border-slate-700 px-4 py-2 rounded-xl flex items-center space-x-2">
+                        <i class="fa-solid fa-stopwatch text-amber-400 text-lg animate-pulse"></i>
+                        <div>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">WAKTU</p>
+                            <p id="timerText" class="text-lg font-black text-amber-400 font-mono">01:30</p>
+                        </div>
+                    </div>
+
+                    <!-- Score Badge -->
+                    <div class="bg-slate-950 border border-slate-700 px-4 py-2 rounded-xl flex items-center space-x-2">
+                        <i class="fa-solid fa-trophy text-amber-400 text-lg"></i>
+                        <div>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">SKOR</p>
+                            <p id="liveScoreText" class="text-lg font-black text-emerald-400 font-mono">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estafet Visual Canvas (3D Third-Person View Running Forward) -->
+            <div class="relative rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+                <canvas id="gameCanvas"></canvas>
+
+                <!-- Pass Baton Overlay Banner (Appears during baton pass) -->
+                <div id="batonOverlay" class="absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center opacity-0 pointer-events-none transition-all duration-300 transform scale-105">
+                    <div class="animate-bounce mb-2">
+                        <i class="fa-solid fa-bolt text-amber-400 text-5xl"></i>
+                    </div>
+                    <h4 class="text-2xl font-black text-amber-300 tracking-wider">SERAH TERIMA TONGKAT ESTAFET!</h4>
+                    <p class="text-sm text-slate-300">Lanjut ke Pelari Pos berikutnya...</p>
+                </div>
+
+                <!-- Level Upgrade Overlay Banner -->
+                <div id="levelOverlay" class="absolute inset-0 bg-gradient-to-tr from-sky-950/90 to-indigo-950/90 backdrop-blur-md flex flex-col items-center justify-center opacity-0 pointer-events-none transition-all duration-500 transform scale-90">
+                    <span class="px-4 py-1.5 bg-amber-500 text-slate-950 font-black rounded-full text-xs uppercase tracking-widest mb-2">LEVEL SELESAI</span>
+                    <h3 id="levelOverlayTitle" class="text-2xl md:text-3xl font-black text-white text-center px-4">MEMASUKI LEVEL BARU</h3>
+                    <p id="levelOverlaySub" class="text-sm text-sky-300 mt-2">Menyiapkan lintasan estafet berikutnya...</p>
+                </div>
+            </div>
+
+            <!-- Quiz Card Box -->
+            <div id="quizCardBox" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl relative animate-pop-in">
+                <p id="qCategory" class="text-xs font-bold text-sky-400 uppercase tracking-wide mb-2">
+                    Materi: Jalur Sutra & Rempah
+                </p>
+                <h3 id="questionText" class="text-base md:text-lg font-bold text-white mb-6 leading-relaxed">
+                    Memuat pertanyaan...
+                </h3>
+
+                <!-- Options List -->
+                <div id="optionsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Dynamic Options Inserted via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. SCREEN: RECAP & CERTIFICATE -->
+        <div id="screenResult" class="screen-fade screen-hidden space-y-6">
+            
+            <!-- Result Overview Header Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 text-center relative overflow-hidden shadow-2xl">
+                <div class="absolute -top-10 -left-10 w-40 h-40 bg-amber-500/10 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-sky-500/10 rounded-full blur-2xl"></div>
+
+                <div class="inline-flex p-4 bg-gradient-to-tr from-amber-500/20 to-sky-500/20 rounded-full border border-amber-500/30 mb-4">
+                    <i class="fa-solid fa-award text-amber-400 text-5xl"></i>
+                </div>
+
+                <h2 class="text-2xl md:text-3xl font-black text-white">HASIL ESTAFET IPS NUSANTARA</h2>
+                <p class="text-slate-400 text-sm mt-1">Selamat! Anda telah menyelesaikan seluruh rangkaian estafet.</p>
+
+                <!-- Stats Badges Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                        <p class="text-xs text-slate-400 font-bold uppercase">SKOR AKHIR</p>
+                        <p id="resTotalScore" class="text-2xl font-black text-amber-400 font-mono">0 / 300</p>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                        <p class="text-xs text-slate-400 font-bold uppercase">BENAR / TOTAL</p>
+                        <p id="resCorrectCount" class="text-2xl font-black text-emerald-400 font-mono">0 / 30</p>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                        <p class="text-xs text-slate-400 font-bold uppercase">AKURASI</p>
+                        <p id="resAccuracy" class="text-2xl font-black text-sky-400 font-mono">0%</p>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                        <p class="text-xs text-slate-400 font-bold uppercase">PREDIKAT</p>
+                        <p id="resGrade" class="text-base font-black text-purple-400 mt-1">SANGAT BAIK</p>
+                    </div>
+                </div>
+
+                <!-- Webhook Sync Status -->
+                <div id="syncStatusBox" class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-xs text-slate-400 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-spinner fa-spin text-sky-400" id="syncIcon"></i>
+                    <span id="syncStatusText">Menyimpan hasil ke Google Spreadsheet...</span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap justify-center gap-3 mt-6">
+                    <button onclick="switchTab('discussion')" class="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold text-sm border border-slate-700 transition flex items-center space-x-2">
+                        <i class="fa-solid fa-book-open text-sky-400"></i>
+                        <span>Lihat Pembahasan</span>
+                    </button>
+                    <button onclick="switchTab('certificate')" class="px-5 py-3 bg-gradient-to-r from-amber-500 to-sky-600 hover:from-amber-400 hover:to-sky-500 text-white rounded-xl font-bold text-sm glow-button transition flex items-center space-x-2">
+                        <i class="fa-solid fa-certificate"></i>
+                        <span>Cetak Sertifikat</span>
+                    </button>
+                    <button onclick="resetGame()" class="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-sm border border-slate-700 transition flex items-center space-x-2">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>Main Lagi</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 1: Pembahasan Soal Section -->
+            <div id="tabDiscussion" class="space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-book-open text-sky-400"></i>
+                        <span>Pembahasan Soal Lengkap (15 Soal)</span>
+                    </h3>
+                    <div class="flex space-x-1">
+                        <button onclick="filterDiscussion(0)" id="filterL0" class="px-3 py-1 bg-sky-500 text-white rounded-lg text-xs font-bold">Semua</button>
+                        <button onclick="filterDiscussion(1)" id="filterL1" class="px-3 py-1 bg-slate-800 text-slate-400 rounded-lg text-xs font-bold">Level 1</button>
+                        <button onclick="filterDiscussion(2)" id="filterL2" class="px-3 py-1 bg-slate-800 text-slate-400 rounded-lg text-xs font-bold">Level 2</button>
+                        <button onclick="filterDiscussion(3)" id="filterL3" class="px-3 py-1 bg-slate-800 text-slate-400 rounded-lg text-xs font-bold">Level 3</button>
+                    </div>
+                </div>
+
+                <div id="discussionCardsContainer" class="space-y-4">
+                    <!-- Dynamic Discussion Cards -->
+                </div>
+            </div>
+
+            <!-- Tab 2: Certificate View -->
+            <div id="tabCertificate" class="hidden">
+                <div class="text-right mb-3 no-print">
+                    <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs flex items-center space-x-2 ml-auto">
+                        <i class="fa-solid fa-print"></i>
+                        <span>Cetak / Download PDF Sertifikat</span>
+                    </button>
+                </div>
+
+                <!-- Printable Certificate Container -->
+                <div id="certificateView" class="bg-white text-slate-900 rounded-2xl p-8 md:p-12 border-8 border-sky-600 shadow-2xl relative overflow-hidden">
+                    <!-- Decorative Corners -->
+                    <div class="absolute top-0 left-0 w-24 h-24 border-t-8 border-l-8 border-amber-500 m-2"></div>
+                    <div class="absolute top-0 right-0 w-24 h-24 border-t-8 border-r-8 border-amber-500 m-2"></div>
+                    <div class="absolute bottom-0 left-0 w-24 h-24 border-b-8 border-l-8 border-amber-500 m-2"></div>
+                    <div class="absolute bottom-0 right-0 w-24 h-24 border-b-8 border-r-8 border-amber-500 m-2"></div>
+
+                    <div class="text-center space-y-4 relative z-10">
+                        <div class="flex justify-center items-center space-x-2">
+                            <i class="fa-solid fa-award text-amber-500 text-4xl"></i>
+                            <h2 class="text-xl font-black text-sky-800 tracking-wider uppercase">SERTIFIKAT PENGHARGAAN</h2>
+                        </div>
+                        <p class="text-xs text-slate-500 uppercase tracking-widest font-semibold">ESTAFET IPS NUSANTARA KELAS 8</p>
+
+                        <div class="py-4">
+                            <p class="text-xs text-slate-600 italic">Diberikan kepada siswa hebat:</p>
+                            <h1 id="certStudentName" class="text-2xl md:text-4xl font-black text-slate-900 my-2 underline decoration-sky-500 decoration-2">NAMA SISWA</h1>
+                            <p id="certStudentMeta" class="text-sm font-bold text-slate-700">Kelas: 8A</p>
+                        </div>
+
+                        <p class="text-xs md:text-sm text-slate-600 max-w-lg mx-auto leading-relaxed">
+                            Telah berhasil menyelesaikan seluruh tantangan kuis estafet interaktif materi <span class="font-bold">Kondisi Geografis dan Interaksi dengan Bangsa Asing</span> dengan perolehan hasil berikut:
+                        </p>
+
+                        <!-- Score Box in Cert -->
+                        <div class="inline-flex border-2 border-sky-500 rounded-2xl bg-sky-50 p-4 space-x-6 my-2">
+                            <div>
+                                <p class="text-[10px] text-slate-500 uppercase font-bold">TOTAL SKOR</p>
+                                <p id="certScore" class="text-2xl font-black text-sky-700">300 / 300</p>
+                            </div>
+                            <div class="border-l border-sky-200 pl-6">
+                                <p class="text-[10px] text-slate-500 uppercase font-bold">AKURASI</p>
+                                <p id="certAccuracy" class="text-2xl font-black text-emerald-600">100%</p>
+                            </div>
+                            <div class="border-l border-sky-200 pl-6">
+                                <p class="text-[10px] text-slate-500 uppercase font-bold">PREDIKAT</p>
+                                <p id="certGrade" class="text-2xl font-black text-amber-600">SANGAT MEMUASKAN</p>
+                            </div>
+                        </div>
+
+                        <!-- Footer Signatures -->
+                        <div class="flex justify-between items-end pt-8 px-4 text-left">
+                            <div>
+                                <p id="certDate" class="text-xs text-slate-500">Tanggal: 27 Oktober 2026</p>
+                                <p class="text-xs font-bold text-slate-800 mt-1">Sistem Kuis Estafet IPS SMP</p>
+                            </div>
+
+                            <div class="text-center">
+                                <div class="w-20 h-20 mx-auto border-2 border-amber-500 rounded-full flex items-center justify-center bg-amber-50 text-amber-600 font-extrabold text-[10px] uppercase shadow-inner">
+                                    IPS RELAY<br>MASTER
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">Verifikasi Digital</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Spreadsheet Webhook Configuration Modal -->
+    <div id="configModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
+            <button onclick="closeConfigModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-file-excel text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-base">Pengaturan Webhook Spreadsheet</h3>
+                    <p class="text-xs text-slate-400">Google Apps Script Webhook URL</p>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                Nilai dan rekap jawaban siswa akan dikirim otomatis ke URL Webhook ini secara instant saat game selesai.
+            </p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">URL Webhook Google Sheets</label>
+                    <input type="url" id="inputWebhookUrl" placeholder="https://script.google.com/macros/s/..." class="w-full bg-slate-950 border border-slate-700 rounded-xl py-2.5 px-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="flex justify-end space-x-2">
+                    <button onclick="saveWebhookConfig()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition">
+                        Simpan URL
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Copyright -->
+    <footer class="bg-slate-950 border-t border-slate-900 py-3 text-center text-xs text-slate-500">
+        Game Estafet Pembelajaran IPS Kelas 8 • Kondisi Geografis & Bangsa Asing
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        /* ==========================================================================
+           1. DATA QUESTIONS & LEVEL DEFINITIONS (30 SOAL LENGKAP - 10 PER LEVEL)
+           ========================================================================== */
+        const quizLevels = [
+            {
+                level: 1,
+                title: "Interaksi dengan Bangsa Asing di Masa Lalu",
+                category: "Jalur Sutra, Peradaban Kuno & Jalur Rempah",
+                questions: [
+                    {
+                        q: "Apa yang dimaksud dengan Jalur Sutra?",
+                        options: [
+                            "Jalur khusus untuk mengirim pasukan perang",
+                            "Jaringan perdagangan yang menghubungkan Asia dengan wilayah lain, termasuk Eropa",
+                            "Jalur pelayaran khusus bangsa Indonesia",
+                            "Jalur untuk menyebarkan agama Hindu saja"
+                        ],
+                        answer: 1,
+                        explanation: "Jalur Sutra adalah jaringan perdagangan kuno darat dan laut yang menghubungkan Asia (terutama Tiongkok dan India) dengan Eropa dan Afrika."
+                    },
+                    {
+                        q: "Mengapa bangsa Eropa datang ke Nusantara pada masa lalu?",
+                        options: [
+                            "Untuk mencari daerah bersalju",
+                            "Untuk mempelajari bahasa daerah saja",
+                            "Untuk mencari rempah-rempah yang bernilai tinggi",
+                            "Untuk membangun kerajaan Hindu"
+                        ],
+                        answer: 2,
+                        explanation: "Daya tarik utama bangsa Eropa ke Nusantara adalah rempah-rempah seperti cengkih dan pala yang bernilai setara emas di Eropa."
+                    },
+                    {
+                        q: "Apa yang dimaksud dengan kolonialisme?",
+                        options: [
+                            "Penguasaan suatu wilayah oleh bangsa lain untuk kepentingannya",
+                            "Pertukaran barang secara sukarela",
+                            "Kerja sama antarkerajaan yang setara",
+                            "Perjalanan untuk mempelajari budaya"
+                        ],
+                        answer: 0,
+                        explanation: "Kolonialisme merupakan paham mengenai penguasaan suatu negara/bangsa atas daerah lain untuk memperluas kekuasaan dan menguras sumber daya."
+                    },
+                    {
+                        q: "Rempah-rempah apa yang terkenal berasal dari Kepulauan Maluku?",
+                        options: [
+                            "Gandum dan jelai",
+                            "Teh dan kopi",
+                            "Kentang dan jagung",
+                            "Cengkih dan pala"
+                        ],
+                        answer: 3,
+                        explanation: "Kepulauan Maluku dikenal dunia sebagai 'The Spice Islands' utama penghasil cengkih dan pala."
+                    },
+                    {
+                        q: "Selain memperdagangkan barang, apa dampak interaksi melalui jalur perdagangan pada masa lalu?",
+                        options: [
+                            "Semua kerajaan menghilang",
+                            "Terjadinya pertukaran budaya, agama, dan pengetahuan",
+                            "Hubungan antardaerah terputus",
+                            "Masyarakat berhenti melakukan pelayaran"
+                        ],
+                        answer: 1,
+                        explanation: "Jalur perdagangan tidak hanya membawa komoditas ekonomi, tetapi juga media penyebaran agama, kebudayaan, seni, dan teknologi."
+                    },
+                    // SOAL TAMBAHAN LEVEL 1 (NEW)
+                    {
+                        q: "Apa peran Peradaban Romawi dalam sistem perdagangan internasional masa kuno?",
+                        options: [
+                            "Menjadi konsumen utama komoditas sutra, rempah, dan barang mewah dari Timur",
+                            "Menutup seluruh pelabuhan di Laut Tengah",
+                            "Melarang penggunaan mata uang dalam jual beli",
+                            "Hanya berdagang dengan wilayah Benua Amerika"
+                        ],
+                        answer: 0,
+                        explanation: "Kekaisaran Romawi merupakan pasar terbesar bagi produk komoditas timur seperti kain sutra Tiongkok dan rempah-rempah Nusantara."
+                    },
+                    {
+                        q: "Bagaimana Kekaisaran Mongol mempengaruhi keamanan jalur perdagangan Jalur Sutra pada abad ke-13?",
+                        options: [
+                            "Menghancurkan seluruh jalur perdagangan darat",
+                            "Menciptakan kedamaian (Pax Mongolica) yang mengamankan rute pedagang lintas benua",
+                            "Melarang pedagang luar masuk ke wilayah Asia",
+                            "Memutus hubungan diplomasi antara Eropa dan Asia"
+                        ],
+                        answer: 1,
+                        explanation: "Di bawah Kekaisaran Mongol (Pax Mongolica), Jalur Sutra menjadi sangat aman bagi penjelajah dan pedagang seperti Marco Polo."
+                    },
+                    {
+                        q: "Mengapa kain sutra dari Tiongkok menjadi barang komoditas yang sangat berharga di Jalur Sutra?",
+                        options: [
+                            "Karena terbuat dari benang logam emas",
+                            "Karena rahasia pembuatannya dijaga ketat serta memiliki tekstur sangat halus dan indah",
+                            "Karena kain sutra digunakan sebagai alat pembayaran pajak resmi di Eropa",
+                            "Karena hanya boleh dipakai oleh para prajurit perang"
+                        ],
+                        answer: 1,
+                        explanation: "Sutra adalah komoditas bernilai tinggi karena teknik pembuatannya yang rumit dan eksklusif dari ulat sutra di Tiongkok."
+                    },
+                    {
+                        q: "Komoditas utama apa yang dicari pedagang asing dari perairan maritim Nusantara selain rempah-rempah?",
+                        options: [
+                            "Kapur barus, kayu cendana, dan hasil laut seperti mutiara",
+                            "Minyak bumi dan gas alam",
+                            "Mesin pabrik dan kertas modern",
+                            "Gandum dan gading gajah Afrika"
+                        ],
+                        answer: 0,
+                        explanation: "Selain cengkih dan pala, pedagang asing berburu kapur barus dari Barus (Sumatera) serta kayu cendana dari Nusa Tenggara."
+                    },
+                    {
+                        q: "Apa perbedaan mendasar antara kolonialisme dan imperialisme?",
+                        options: [
+                            "Kolonialisme fokus menguasai fisik wilayah pemukiman, sedangkan imperialisme fokus menguasai sistem politik & ekonomi",
+                            "Kolonialisme dilakukan bangsa Asia, imperialisme oleh bangsa Eropa",
+                            "Kolonialisme adalah perdagangan bebas, imperialisme adalah perang saudara",
+                            "Tidak ada perbedaan sama sekali"
+                        ],
+                        answer: 0,
+                        explanation: "Kolonialisme bertujuan menguasai dan menguras sumber daya wilayah koloni, sedangkan imperialisme bertujuan menanamkan pengaruh kekuasaan politik atas negara lain."
+                    }
+                ]
+            },
+            {
+                level: 2,
+                title: "Perdagangan Nusantara pada Awal Masehi",
+                category: "Jaringan Perdagangan Masa Hindu-Buddha & Selat Malaka",
+                questions: [
+                    {
+                        q: "Mengapa Nusantara menjadi tempat penting dalam jaringan perdagangan pada awal Masehi?",
+                        options: [
+                            "Karena tidak memiliki hubungan dengan bangsa lain",
+                            "Karena seluruh wilayahnya berupa gurun",
+                            "Karena letaknya strategis di antara jalur perdagangan India dan Tiongkok",
+                            "Karena semua perdagangan dunia hanya terjadi di Jawa"
+                        ],
+                        answer: 2,
+                        explanation: "Nusantara terletak di persimpangan dua pusat peradaban dan perdagangan dunia antik, yaitu India dan Tiongkok."
+                    },
+                    {
+                        q: "Bagaimana perdagangan membantu terbentuknya jaringan antarpulau di Nusantara?",
+                        options: [
+                            "Pedagang menghubungkan pelabuhan dan daerah penghasil barang",
+                            "Semua penduduk pindah ke satu pulau",
+                            "Kerajaan melarang pelayaran antarpulau",
+                            "Setiap daerah hanya menghasilkan barang untuk dirinya sendiri"
+                        ],
+                        answer: 0,
+                        explanation: "Aktivitas pelayaran dan perdagangan menciptakan integrasi ekonomi dan jaringan perhubungan antarpulau."
+                    },
+                    {
+                        q: "Apa yang dimaksud dengan Selat Malaka dalam perdagangan masa lalu?",
+                        options: [
+                            "Sungai utama di Pulau Jawa",
+                            "Pegunungan yang memisahkan India dan Tiongkok",
+                            "Pelabuhan khusus kerajaan Majapahit",
+                            "Selat strategis yang menghubungkan kawasan Samudra Hindia dengan Laut Cina Selatan melalui perairan sekitarnya"
+                        ],
+                        answer: 3,
+                        explanation: "Selat Malaka merupakan pintu gerbang utama pelayaran internasional yang menghubungkan Samudra Hindia dan Laut Cina Selatan."
+                    },
+                    {
+                        q: "Mengapa Selat Malaka ramai dikunjungi pedagang dari berbagai bangsa?",
+                        options: [
+                            "Karena tidak memiliki jalur laut",
+                            "Karena menjadi jalur pelayaran strategis untuk perdagangan antarkawasan",
+                            "Karena hanya menjual hasil pertanian lokal",
+                            "Karena semua kerajaan melarang perdagangan luar negeri"
+                        ],
+                        answer: 1,
+                        explanation: "Selat Malaka menjadi choke point strategis di mana angin muson membantu pelayaran kapal-kapal dagang dari berbagai penjuru."
+                    },
+                    {
+                        q: "Apa pengaruh perdagangan pada masa Hindu-Buddha terhadap perkembangan kerajaan di Nusantara?",
+                        options: [
+                            "Membuat semua kerajaan kehilangan pelabuhan",
+                            "Menghapus seluruh kegiatan pertanian",
+                            "Mendorong pertumbuhan pelabuhan, kekayaan kerajaan, dan hubungan budaya",
+                            "Menghentikan hubungan dengan India"
+                        ],
+                        answer: 2,
+                        explanation: "Perdagangan meningkatkan pendapatan kerajaan dari pajak pelabuhan dan mempercepat perkembangan peradaban."
+                    },
+                    // SOAL TAMBAHAN LEVEL 2 (NEW)
+                    {
+                        q: "Mengapa Kapur Barus dari pantai barat Sumatera sangat terkenal di dunia perdagangan kuno hingga Timur Tengah?",
+                        options: [
+                            "Digunakan sebagai bahan pengawet mumia, wewangian, dan obat-obatan bernilai tinggi",
+                            "Digunakan sebagai bahan pembuatan kapal perang",
+                            "Merupakan bahan makanan pokok pedagang Arab",
+                            "Digunakan sebagai pewarna pakaian sutra"
+                        ],
+                        answer: 0,
+                        explanation: "Kapur Barus (Camphor) dari Barus, Sumatera Utara, diekspor hingga ke Mesir dan Timur Tengah sebagai bahan obat dan wewangian berharga mahal."
+                    },
+                    {
+                        q: "Peran fenomena alam apa yang sangat dimanfaatkan oleh para pelaut kuno untuk berlayar menyeberangi Samudra Hindia?",
+                        options: [
+                            "Angin Muson Barat dan Angin Muson Timur",
+                            "Gaya gravitasi bulan dan pasang surut air laut",
+                            "Badai topan tahunan",
+                            "Letusan gunung berapi bawah laut"
+                        ],
+                        answer: 0,
+                        explanation: "Pelaut dan pedagang memanfaatkan perubahan arah Angin Muson secara berkala untuk berlayar dari India/Arab ke Nusantara dan sebaliknya."
+                    },
+                    {
+                        q: "Sistem transaksi apakah yang paling umum digunakan dalam kegiatan perdagangan antarpulau awal masehi sebelum penggunaan mata uang logam secara luas?",
+                        options: [
+                            "Sistem Barter (Tukar-menukar barang)",
+                            "Transfer bank elektronik",
+                            "Kartu kredit kayu",
+                            "Sistem obligasi kerajaan"
+                        ],
+                        answer: 0,
+                        explanation: "Masyarakat awal masehi menggunakan sistem barter dengan menukarkan komoditas hasil bumi lokal dengan barang impor seperti keramik dan kaca."
+                    },
+                    {
+                        q: "Fungsi utama kota pelabuhan (bandar) pada masa Hindu-Buddha di Nusantara adalah...",
+                        options: [
+                            "Pusat transit pertukaran komoditas, tempat perbekalan kapal, dan pemungutan bea cukai",
+                            "Tempat pengasingan tawanan perang",
+                            "Pusat pemukiman khusus untuk raja saja",
+                            "Area lahan pertanian padi utama"
+                        ],
+                        answer: 0,
+                        explanation: "Pelabuhan berfungsi sebagai hub emporium transit barang dagangan, tempat perbaikan kapal, serta sumber pendapatan pajak kerajaan maritim."
+                    },
+                    {
+                        q: "Mengapa pedagang Tiongkok banyak yang memilih singgah dan menetap sementara di pelabuhan Nusantara?",
+                        options: [
+                            "Menunggu perubahan arah angin muson untuk melanjutkan pelayaran sambil melakukan jual beli",
+                            "Karena kapal mereka dilarang kembali ke Tiongkok",
+                            "Untuk mendirikan kerajaan baru",
+                            "Karena tidak ada jalur laut kembali ke utara"
+                        ],
+                        answer: 0,
+                        explanation: "Persinggahan sementara (transit) terjadi karena pedagang harus menunggu angin muson yang tepat untuk berlayar kembali."
+                    }
+                ]
+            },
+            {
+                level: 3,
+                title: "Perkembangan Kehidupan Masyarakat Masa Kerajaan Hindu-Buddha",
+                category: "Masuknya Pengaruh & Peninggalan Sejarah Bercorak Hindu-Buddha",
+                questions: [
+                    {
+                        q: "Bagaimana agama dan kebudayaan Hindu-Buddha berkembang di Nusantara?",
+                        options: [
+                            "Melalui perdagangan, hubungan antarmasyarakat, dan interaksi dengan pendatang",
+                            "Hanya melalui penaklukan seluruh wilayah Nusantara",
+                            "Melalui penutupan semua pelabuhan",
+                            "Dengan menghilangkan seluruh kebudayaan lokal"
+                        ],
+                        answer: 0,
+                        explanation: "Terjadi proses akulturasi secara damai melalui aktivitas perdagangan dan pengangkatan kaum Brahmana."
+                    },
+                    {
+                        q: "Apa salah satu bukti sejarah awal pengaruh Hindu di Indonesia?",
+                        options: [
+                            "Naskah Proklamasi",
+                            "Candi Borobudur sebagai peninggalan Hindu",
+                            "Prasasti Yupa dari Kerajaan Kutai",
+                            "Benteng peninggalan VOC"
+                        ],
+                        answer: 2,
+                        explanation: "Prasasti Yupa abad ke-4 Masehi di Kalimantan Timur merupakan bukti tertulis tertua keberadaan pengaruh Hindu di Nusantara."
+                    },
+                    {
+                        q: "Candi Borobudur merupakan peninggalan bercorak agama apa?",
+                        options: [
+                            "Hindu",
+                            "Buddha",
+                            "Islam",
+                            "Kristen"
+                        ],
+                        answer: 1,
+                        explanation: "Candi Borobudur didirikan oleh Dinasti Syailendra pada abad ke-8 sampai ke-9 Masehi yang bercorak Buddha Mahayana."
+                    },
+                    {
+                        q: "Apa fungsi prasasti bagi para sejarawan?",
+                        options: [
+                            "Sebagai alat untuk berdagang",
+                            "Sebagai tempat menyimpan hasil panen",
+                            "Sebagai alat navigasi kapal modern",
+                            "Sebagai sumber informasi tentang kehidupan dan pemerintahan masa lalu"
+                        ],
+                        answer: 3,
+                        explanation: "Prasasti berisi tulisan kawi/pallawa pada batu atau logam yang memberikan fakta autentik mengenai silsilah, undang-undang, dan peristiwa sejarah."
+                    },
+                    {
+                        q: "Apa contoh pengaruh Hindu-Buddha terhadap kehidupan masyarakat Nusantara?",
+                        options: [
+                            "Berkembangnya kerajaan, seni bangunan candi, dan karya sastra",
+                            "Hilangnya seluruh tradisi lokal secara langsung",
+                            "Berakhirnya kegiatan perdagangan laut",
+                            "Semua masyarakat menggunakan satu bahasa yang sama"
+                        ],
+                        answer: 0,
+                        explanation: "Pengaruh Hindu-Buddha mengubah struktur kepemimpinan suku menjadi sistem kerajaan serta melahirkan seni arsitektur candi dan karya sastra kakawin."
+                    },
+                    // SOAL TAMBAHAN LEVEL 3 (NEW)
+                    {
+                        q: "Teori yang menyatakan bahwa agama Hindu dibawa dan disebarkan oleh kaum Brahmana (pendeta) yang diundang oleh penguasa lokal Nusantara dinamakan Teori...",
+                        options: [
+                            "Teori Brahmana",
+                            "Teori Waisya",
+                            "Teori Ksatria",
+                            "Teori Arus Balik"
+                        ],
+                        answer: 0,
+                        explanation: "Teori Brahmana (dikemukakan oleh JC van Leur) menyatakan Brahmana diundang raja lokal untuk memimpin upacara Vratyastoma dan memberkati penobatan."
+                    },
+                    {
+                        q: "Teori Arus Balik mengemukakan bahwa perkembangan Hindu-Buddha terjadi karena...",
+                        options: [
+                            "Pemuda dan cendekiawan Nusantara sendiri yang belajar ke India lalu pulang menyebarkannya",
+                            "Pasukan perang dari India menyerbu pulau Jawa",
+                            "Para pedagang asing memaksa warga lokal memeluk agamanya",
+                            "Rakyat Nusantara mengungsi ke India"
+                        ],
+                        answer: 0,
+                        explanation: "Teori Arus Balik (FDK Bosch) menekankan peran aktif pemuda Nusantara yang menuntut ilmu ke pusat kebudayaan India lalu menyebarkannya di tanah air."
+                    },
+                    {
+                        q: "Prasasti Ciaruteun yang memiliki lukisan telapak kaki Raja Purnawarman merupakan peninggalan dari Kerajaan...",
+                        options: [
+                            "Tarumanagara",
+                            "Kutai",
+                            "Majapahit",
+                            "Sriwijaya"
+                        ],
+                        answer: 0,
+                        explanation: "Prasasti Ciaruteun berada di Bogor, Jawa Barat, merupakan peninggalan Kerajaan Tarumanagara yang memuat jejak telapak kaki Raja Purnawarman disamakan dengan kaki Dewa Wisnu."
+                    },
+                    {
+                        q: "Candi Prambanan di Jawa Tengah merupakan kompleks candi megah bercorak agama...",
+                        options: [
+                            "Hindu (dipersembahkan untuk Trimurti: Brahma, Wisnu, Siwa)",
+                            "Buddha Mahayana",
+                            "Islam",
+                            "Konghucu"
+                        ],
+                        answer: 0,
+                        explanation: "Candi Prambanan adalah candi Hindu terbesar di Indonesia yang dibangun oleh Kerajaan Mataram Kuno untuk menghormati Trimurti."
+                    },
+                    {
+                        q: "Apa yang dimaksud dengan proses akulturasi budaya pada masa Hindu-Buddha di Nusantara?",
+                        options: [
+                            "Perpaduan unsur budaya asing dengan budaya lokal tanpa menghilangkan kepribadian asli budaya lokal",
+                            "Pemusnahan total seluruh tradisi asli nenek moyang",
+                            "Penolakan masyarakat lokal terhadap budaya asing",
+                            "Penggabungan dua negara menjadi satu wilayah imperialisme"
+                        ],
+                        answer: 0,
+                        explanation: "Akulturasi terjadi saat budaya Hindu-Buddha menyatu harmonis dengan tradisi asli Nusantara (seperti konsep punden berundak pada arsitektur candi)."
+                    }
+                ]
+            }
+        ];
+
+        /* Flatten total 15 questions list */
+        let allQuestions = [];
+        quizLevels.forEach(lvl => {
+            lvl.questions.forEach((q, idx) => {
+                allQuestions.push({
+                    ...q,
+                    levelNum: lvl.level,
+                    levelTitle: lvl.title,
+                    category: lvl.category,
+                    globalIndex: allQuestions.length
+                });
+            });
+        });
+
+        /* ==========================================================================
+           2. AUDIO & SOUND EFFECTS ENGINE
+           ========================================================================== */
+        const clickAudio = new Audio('https://files.catbox.moe/yonzob.mp3');
+        let soundEnabled = true;
+        let bgmEnabled = true;
+        let audioCtx = null;
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playClickSound() {
+            if (!soundEnabled) return;
+            try {
+                clickAudio.currentTime = 0;
+                clickAudio.play().catch(e => console.log('Audio autoplay blocked'));
+            } catch (err) {}
+        }
+
+        function playTypingSound() {
+            if (!soundEnabled) return;
+            initAudioContext();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400 + Math.random() * 200, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function playTimerTickSound() {
+            if (!soundEnabled) return;
+            initAudioContext();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.04);
+        }
+
+        function playBuzzerSound() {
+            if (!soundEnabled) return;
+            initAudioContext();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        function playCheerSound() {
+            if (!soundEnabled) return;
+            initAudioContext();
+            if (!audioCtx) return;
+            // Arpeggio sound
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (i * 0.1));
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime + (i * 0.1));
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (i * 0.1) + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + (i * 0.1));
+                osc.stop(audioCtx.currentTime + (i * 0.1) + 0.3);
+            });
+        }
+
+        // Ambient BGM Synthesizer Loop
+        let bgmInterval = null;
+        function startBGM() {
+            if (!bgmEnabled || bgmInterval) return;
+            const notes = [261.63, 293.66, 329.63, 392.00, 440.00];
+            let noteIdx = 0;
+            bgmInterval = setInterval(() => {
+                if (!bgmEnabled) return;
+                initAudioContext();
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(notes[noteIdx % notes.length], audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.8);
+                noteIdx++;
+            }, 1000);
+        }
+
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+        }
+
+        function toggleSFX() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('sfxIcon');
+            btn.className = soundEnabled ? "fa-solid fa-volume-high" : "fa-solid fa-volume-xmark text-slate-500";
+            playClickSound();
+        }
+
+        function toggleBGM() {
+            bgmEnabled = !bgmEnabled;
+            const btn = document.getElementById('bgmIcon');
+            if (bgmEnabled) {
+                btn.className = "fa-solid fa-music";
+                startBGM();
+            } else {
+                btn.className = "fa-solid fa-music-slash text-slate-500";
+                stopBGM();
+            }
+            playClickSound();
+        }
+
+        /* ==========================================================================
+           3. GAME STATE & REGISTRATION LOGIC
+           ========================================================================== */
+        let gameState = {
+            studentName: '',
+            studentClass: '',
+            studentAbsence: '',
+            character: 'boy', // boy or girl
+            currentQuestionIdx: 0,
+            score: 0,
+            answers: [], // store user answers
+            timer: 90, // Updated 1 min 30 sec = 90s
+            timerId: null,
+            webhookUrl: localStorage.getItem('ips_webhook_url') || ''
+        };
+
+        function transitionBetweenScreens(fromScreenId, toScreenId, callback) {
+            const fromEl = document.getElementById(fromScreenId);
+            const toEl = document.getElementById(toScreenId);
+
+            fromEl.classList.remove('screen-visible');
+            fromEl.classList.add('screen-hidden');
+
+            setTimeout(() => {
+                fromEl.classList.add('hidden');
+                toEl.classList.remove('hidden');
+                setTimeout(() => {
+                    toEl.classList.remove('screen-hidden');
+                    toEl.classList.add('screen-visible');
+                    if (callback) callback();
+                }, 50);
+            }, 400);
+        }
+
+        function selectCharacter(char) {
+            playClickSound();
+            gameState.character = char;
+            const cardBoy = document.getElementById('charCardBoy');
+            const cardGirl = document.getElementById('charCardGirl');
+            const checkBoy = document.getElementById('checkBoy');
+            const checkGirl = document.getElementById('checkGirl');
+
+            if (char === 'boy') {
+                cardBoy.className = "cursor-pointer border-2 border-sky-500 bg-sky-950/40 rounded-2xl p-4 text-center transition-all hover:scale-105 relative";
+                cardGirl.className = "cursor-pointer border-2 border-slate-700 bg-slate-800/40 rounded-2xl p-4 text-center transition-all hover:scale-105 relative";
+                checkBoy.classList.remove('hidden');
+                checkGirl.classList.add('hidden');
+            } else {
+                cardGirl.className = "cursor-pointer border-2 border-pink-500 bg-pink-950/40 rounded-2xl p-4 text-center transition-all hover:scale-105 relative";
+                cardBoy.className = "cursor-pointer border-2 border-slate-700 bg-slate-800/40 rounded-2xl p-4 text-center transition-all hover:scale-105 relative";
+                checkGirl.classList.remove('hidden');
+                checkBoy.classList.add('hidden');
+            }
+        }
+
+        function handleStartGame(e) {
+            e.preventDefault();
+            playClickSound();
+            gameState.studentName = document.getElementById('inputStudentName').value;
+            gameState.studentClass = document.getElementById('inputStudentClass').value;
+
+            transitionBetweenScreens('screenStart', 'screenGame', () => {
+                startBGM();
+                initCanvas();
+                loadQuestion(0);
+            });
+        }
+
+        /* Helper Format Timer 90s -> 01:30 */
+        function formatTimerText(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        /* ==========================================================================
+           4. GAMEPLAY & ESTAFET MECHANICS
+           ========================================================================== */
+        function loadQuestion(idx) {
+            if (idx >= allQuestions.length) {
+                finishGame();
+                return;
+            }
+
+            const prevQData = gameState.currentQuestionIdx > 0 ? allQuestions[gameState.currentQuestionIdx - 1] : null;
+            gameState.currentQuestionIdx = idx;
+            const qData = allQuestions[idx];
+
+            // Check if Level Upgrade Triggered
+            if (prevQData && prevQData.levelNum !== qData.levelNum) {
+                showLevelUpgradeTransition(qData.levelNum, qData.levelTitle, () => {
+                    renderQuestionContent(qData, idx);
+                });
+            } else {
+                renderQuestionContent(qData, idx);
+            }
+        }
+
+        function renderQuestionContent(qData, idx) {
+            // Animate card pop-in
+            const quizBox = document.getElementById('quizCardBox');
+            quizBox.classList.remove('animate-pop-in');
+            void quizBox.offsetWidth; // trigger reflow
+            quizBox.classList.add('animate-pop-in');
+
+            // Update Header info
+            document.getElementById('levelBadge').innerText = `LEVEL ${qData.levelNum}`;
+            document.getElementById('levelTitle').innerText = qData.levelTitle;
+            document.getElementById('qCategory').innerText = `Materi: ${qData.category}`;
+            document.getElementById('currentQIndexText').innerText = idx + 1;
+            document.getElementById('totalQIndexText').innerText = allQuestions.length;
+            document.getElementById('liveScoreText').innerText = gameState.score;
+            document.getElementById('questionText').innerText = `${idx + 1}. ${qData.q}`;
+
+            // Render Options
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            const optionLabels = ['A', 'B', 'C', 'D'];
+            qData.options.forEach((opt, oIdx) => {
+                const btn = document.createElement('button');
+                btn.className = "option-card w-full text-left p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-sky-500 hover:bg-sky-950/30 flex items-start space-x-3 text-sm text-slate-200 transition group";
+                btn.onclick = () => handleAnswer(oIdx);
+                btn.innerHTML = `
+                    <span class="w-7 h-7 rounded-lg bg-slate-800 group-hover:bg-sky-500 group-hover:text-white text-slate-400 font-extrabold flex items-center justify-center shrink-0 text-xs border border-slate-700 transition">
+                        ${optionLabels[oIdx]}
+                    </span>
+                    <span class="pt-0.5">${opt}</span>
+                `;
+                container.appendChild(btn);
+            });
+
+            // Start 90s Timer per question (1 min 30 sec)
+            resetTimer();
+        }
+
+        function resetTimer() {
+            clearInterval(gameState.timerId);
+            gameState.timer = 90; // 1 Min 30 Sec
+            document.getElementById('timerText').innerText = formatTimerText(90);
+
+            gameState.timerId = setInterval(() => {
+                gameState.timer--;
+                document.getElementById('timerText').innerText = formatTimerText(gameState.timer);
+
+                if (gameState.timer <= 10 && gameState.timer > 0) {
+                    playTimerTickSound();
+                }
+
+                if (gameState.timer <= 0) {
+                    clearInterval(gameState.timerId);
+                    playBuzzerSound();
+                    // Timeout treated as unanswered (-1)
+                    processNextQuestion(-1);
+                }
+            }, 1000);
+        }
+
+        function handleAnswer(selectedIndex) {
+            playClickSound();
+            clearInterval(gameState.timerId);
+            processNextQuestion(selectedIndex);
+        }
+
+        function processNextQuestion(selectedIndex) {
+            const currentQ = allQuestions[gameState.currentQuestionIdx];
+            const isCorrect = (selectedIndex === currentQ.answer);
+
+            if (isCorrect) {
+                gameState.score += 10; // 10 points per question (Total 30 questions = 300 Max)
+            }
+
+            gameState.answers.push({
+                questionIdx: gameState.currentQuestionIdx,
+                selectedOption: selectedIndex,
+                isCorrect: isCorrect
+            });
+
+            // Trigger Relay Baton Pass Animation
+            triggerBatonPassAnimation(() => {
+                loadQuestion(gameState.currentQuestionIdx + 1);
+            });
+        }
+
+        function triggerBatonPassAnimation(callback) {
+            // Overlay Baton effect
+            const overlay = document.getElementById('batonOverlay');
+            overlay.classList.remove('opacity-0', 'pointer-events-none', 'scale-105');
+            overlay.classList.add('opacity-100', 'scale-100');
+
+            // Trigger canvas speed boost & baton pass action
+            batonPassProgress = 0;
+            isPassingBaton = true;
+
+            setTimeout(() => {
+                overlay.classList.remove('opacity-100', 'scale-100');
+                overlay.classList.add('opacity-0', 'pointer-events-none', 'scale-105');
+                isPassingBaton = false;
+                callback();
+            }, 1100);
+        }
+
+        function showLevelUpgradeTransition(newLevelNum, newLevelTitle, callback) {
+            playCheerSound();
+            const overlay = document.getElementById('levelOverlay');
+            document.getElementById('levelOverlayTitle').innerText = `MEMASUKI LEVEL ${newLevelNum}: ${newLevelTitle.toUpperCase()}`;
+
+            overlay.classList.remove('opacity-0', 'pointer-events-none', 'scale-90');
+            overlay.classList.add('opacity-100', 'scale-100');
+
+            setTimeout(() => {
+                overlay.classList.remove('opacity-100', 'scale-100');
+                overlay.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
+                callback();
+            }, 1600);
+        }
+
+        /* ==========================================================================
+           5. CANVAS 3D PERSPECTIVE RUNNING TRACK ANIMATION WITH CARTOON SCHOOL BACKGROUND
+           ========================================================================== */
+        let canvas, ctx;
+        let animationFrameId;
+        let trackOffset = 0;
+        let batonPassProgress = 0;
+        let isPassingBaton = false;
+
+        function initCanvas() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            requestAnimationFrame(renderCanvas);
+        }
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+
+        function renderCanvas() {
+            if (!canvas || !ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const w = canvas.width;
+            const h = canvas.height;
+            const horizon = h * 0.42;
+
+            const currentSpeed = isPassingBaton ? 12 : 4;
+
+            // 1. Draw Cartoon Sky
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, horizon);
+            skyGrad.addColorStop(0, '#38bdf8');
+            skyGrad.addColorStop(1, '#bae6fd');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, w, horizon);
+
+            // Sun & Fluffy Cartoon Clouds
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(w * 0.15, horizon * 0.35, 22, 0, Math.PI * 2);
+            ctx.fill();
+
+            drawCloud(ctx, w * 0.35, horizon * 0.25, 25);
+            drawCloud(ctx, w * 0.75, horizon * 0.3, 30);
+
+            // 2. Draw Cartoon School Building Background (Based on Ibnu Qoyyim Reference)
+            // Multi-story Blue Building with Orange Accents & Red Roof
+            const bWidth = w * 0.55;
+            const bHeight = horizon * 0.65;
+            const bX = w * 0.22;
+            const bY = horizon - bHeight;
+
+            // Main Building Base (Blue)
+            ctx.fillStyle = '#1d4ed8'; // Bright Cartoon Blue
+            ctx.fillRect(bX, bY, bWidth, bHeight);
+
+            // Orange Accent Panels & Columns
+            ctx.fillStyle = '#f97316'; // Vibrant Orange
+            ctx.fillRect(bX, bY, bWidth, 8); // Top Banner Line
+            ctx.fillRect(bX + 10, bY + 10, 15, bHeight - 10);
+            ctx.fillRect(bX + bWidth - 25, bY + 10, 15, bHeight - 10);
+
+            // Windows Grid (Cartoon Classrooms)
+            ctx.fillStyle = '#e0f2fe';
+            ctx.strokeStyle = '#0284c7';
+            ctx.lineWidth = 1.5;
+            for (let r = 0; r < 2; r++) {
+                for (let c = 0; c < 5; c++) {
+                    let winX = bX + 35 + (c * (bWidth - 70) / 4) - 10;
+                    let winY = bY + 14 + (r * 18);
+                    ctx.fillRect(winX, winY, 18, 12);
+                    ctx.strokeRect(winX, winY, 18, 12);
+                }
+            }
+
+            // School Signboard Text ("SMP IBNU QOYYIM")
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 10px Plus Jakarta Sans, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('SMP IBNU QOYYIM', bX + (bWidth / 2), bY + 12);
+
+            // Red/Brown Hip Roof
+            ctx.fillStyle = '#991b1b';
+            ctx.beginPath();
+            ctx.moveTo(bX - 10, bY);
+            ctx.lineTo(bX + (bWidth / 2), bY - 22);
+            ctx.lineTo(bX + bWidth + 10, bY);
+            ctx.closePath();
+            ctx.fill();
+
+            // 3. Banana Trees & Green School Vegetation (Left & Right)
+            drawBananaTree(ctx, w * 0.08, horizon);
+            drawBananaTree(ctx, w * 0.88, horizon);
+
+            // Fence & Post on Left
+            ctx.fillStyle = '#94a3b8';
+            for (let f = 0; f < 6; f++) {
+                ctx.fillRect(5 + (f * 12), horizon - 20, 4, 20);
+            }
+
+            // 4. Draw School Yard Ground (Green Grass & Concrete Field)
+            ctx.fillStyle = '#16a34a';
+            ctx.fillRect(0, horizon, w, h - horizon);
+
+            // 5. Perspective Athletic Running Track on School Yard
+            const vpX = w / 2;
+            const vpY = horizon;
+            const trackWidthBottom = w * 0.85;
+            const trackWidthTop = w * 0.15;
+
+            ctx.fillStyle = '#dc2626'; // Terracotta Red Track
+            ctx.beginPath();
+            ctx.moveTo(vpX - trackWidthTop / 2, vpY);
+            ctx.lineTo(vpX + trackWidthTop / 2, vpY);
+            ctx.lineTo(vpX + trackWidthBottom / 2, h);
+            ctx.lineTo(vpX - trackWidthBottom / 2, h);
+            ctx.closePath();
+            ctx.fill();
+
+            // Track Moving Lines Animation
+            trackOffset = (trackOffset + currentSpeed) % 40;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.lineWidth = 2;
+
+            for (let i = 0; i < 15; i++) {
+                let z = (i * 30 + trackOffset) % 400;
+                let scale = z / 400;
+                let yPos = vpY + (h - vpY) * scale;
+                let currentTrackWidth = trackWidthTop + (trackWidthBottom - trackWidthTop) * scale;
+
+                ctx.beginPath();
+                ctx.moveTo(vpX - currentTrackWidth / 2, yPos);
+                ctx.lineTo(vpX + currentTrackWidth / 2, yPos);
+                ctx.stroke();
+            }
+
+            // White Outer Borders
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(vpX - trackWidthTop / 2, vpY);
+            ctx.lineTo(vpX - trackWidthBottom / 2, h);
+            ctx.moveTo(vpX + trackWidthTop / 2, vpY);
+            ctx.lineTo(vpX + trackWidthBottom / 2, h);
+            ctx.stroke();
+
+            // Speed Lines Effect during baton pass
+            if (isPassingBaton) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 2;
+                for (let s = 0; s < 12; s++) {
+                    let rx = Math.random() * w;
+                    let ry1 = Math.random() * h;
+                    ctx.beginPath();
+                    ctx.moveTo(rx, ry1);
+                    ctx.lineTo(rx + (rx > w / 2 ? 15 : -15), ry1 + 30);
+                    ctx.stroke();
+                }
+            }
+
+            // 6. Draw Runners Seen From Behind
+            const runnerY = h * 0.76;
+            const runnerX = vpX;
+
+            if (isPassingBaton) {
+                batonPassProgress += 0.05;
+                drawRunnerBack(ctx, runnerX - 30, runnerY + 10, gameState.character, true);
+                drawRunnerBack(ctx, runnerX + 20, runnerY - 20, gameState.character === 'boy' ? 'girl' : 'boy', false);
+            } else {
+                drawRunnerBack(ctx, runnerX, runnerY, gameState.character, true);
+            }
+
+            animationFrameId = requestAnimationFrame(renderCanvas);
+        }
+
+        // Cartoon Helper: Cloud Draw
+        function drawCloud(ctx, cx, cy, radius) {
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.arc(cx - radius * 0.5, cy + 5, radius * 0.7, 0, Math.PI * 2);
+            ctx.arc(cx + radius * 0.5, cy + 5, radius * 0.7, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Cartoon Helper: Banana Tree Draw
+        function drawBananaTree(ctx, tx, ty) {
+            ctx.fillStyle = '#854d0e';
+            ctx.fillRect(tx - 4, ty - 35, 8, 35);
+
+            ctx.fillStyle = '#22c55e';
+            for (let a = 0; a < 5; a++) {
+                let angle = (a - 2) * 0.4;
+                ctx.beginPath();
+                ctx.ellipse(tx + Math.sin(angle) * 18, ty - 35 + Math.cos(angle) * 5, 18, 6, angle, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Draw runner avatar from behind (without absence number)
+        function drawRunnerBack(ctx, x, y, charType, hasBaton) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            const isBoy = (charType === 'boy');
+            const shirtColor = isBoy ? '#0284c7' : '#ec4899';
+            const hairColor = isBoy ? '#1e3a8a' : '#831843';
+
+            const legSwing = Math.sin(Date.now() / (isPassingBaton ? 40 : 80)) * 12;
+
+            ctx.strokeStyle = '#fbcfe8';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+
+            // Left leg
+            ctx.beginPath();
+            ctx.moveTo(-10, 20);
+            ctx.lineTo(-15, 45 + legSwing);
+            ctx.stroke();
+
+            // Right leg
+            ctx.beginPath();
+            ctx.moveTo(10, 20);
+            ctx.lineTo(15, 45 - legSwing);
+            ctx.stroke();
+
+            // Running Shoes
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(-20, 43 + legSwing, 10, 6);
+            ctx.fillRect(10, 43 - legSwing, 10, 6);
+
+            // Body / Jersey (View from behind)
+            ctx.fillStyle = shirtColor;
+            ctx.beginPath();
+            ctx.roundRect(-20, -10, 40, 35, 6);
+            ctx.fill();
+
+            // Head & Hair
+            ctx.fillStyle = '#fbcfe8';
+            ctx.beginPath();
+            ctx.arc(0, -22, 14, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hair from back
+            ctx.fillStyle = hairColor;
+            ctx.beginPath();
+            if (isBoy) {
+                ctx.arc(0, -25, 15, Math.PI, Math.PI * 2);
+            } else {
+                ctx.arc(0, -25, 16, 0, Math.PI * 2);
+                ctx.fillRect(-12, -25, 24, 25);
+            }
+            ctx.fill();
+
+            // Baton in hand
+            if (hasBaton) {
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillRect(18, -5, 6, 22);
+            }
+
+            ctx.restore();
+        }
+
+        /* ==========================================================================
+           6. FINISH GAME, RECAP, & GOOGLE SPREADSHEET AUTO SAVE
+           ========================================================================== */
+        function finishGame() {
+            stopBGM();
+            playCheerSound();
+
+            transitionBetweenScreens('screenGame', 'screenResult', () => {
+                const totalScore = gameState.score;
+                const correctCount = gameState.answers.filter(a => a.isCorrect).length;
+                const accuracy = Math.round((correctCount / allQuestions.length) * 100);
+
+                let grade = 'CUKUP';
+                if (accuracy >= 85) grade = 'SANGAT MEMUASKAN';
+                else if (accuracy >= 70) grade = 'BAIK';
+
+                // Populate Result Overview
+                document.getElementById('resTotalScore').innerText = `${totalScore} / 300`;
+                document.getElementById('resCorrectCount').innerText = `${correctCount} / 30`;
+                document.getElementById('resAccuracy').innerText = `${accuracy}%`;
+                document.getElementById('resGrade').innerText = grade;
+
+                // Populate Printable Certificate
+                document.getElementById('certStudentName').innerText = gameState.studentName.toUpperCase();
+                document.getElementById('certStudentMeta').innerText = `Kelas: ${gameState.studentClass}`;
+                document.getElementById('certScore').innerText = `${totalScore} / 300`;
+                document.getElementById('certAccuracy').innerText = `${accuracy}%`;
+                document.getElementById('certGrade').innerText = grade;
+                document.getElementById('certDate').innerText = `Tanggal: ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+
+                // Render Discussion List
+                renderDiscussionCards();
+
+                // Send Data to Spreadsheet / LocalStorage
+                saveToSpreadsheet({
+                    nama: gameState.studentName,
+                    kelas: gameState.studentClass,
+                    karakter: gameState.character.toUpperCase(),
+                    skorTotal: totalScore,
+                    benarCount: correctCount,
+                    akurasi: `${accuracy}%`,
+                    predikat: grade,
+                    tanggal: new Date().toISOString()
+                });
+            });
+        }
+
+        function saveToSpreadsheet(data) {
+            const syncIcon = document.getElementById('syncIcon');
+            const syncText = document.getElementById('syncStatusText');
+
+            // Fallback always save to LocalStorage
+            let history = JSON.parse(localStorage.getItem('ips_relay_history') || '[]');
+            history.push(data);
+            localStorage.setItem('ips_relay_history', JSON.stringify(history));
+
+            if (!gameState.webhookUrl) {
+                syncIcon.className = "fa-solid fa-circle-check text-emerald-400";
+                syncText.innerText = "Hasil tersimpan di penyimpanan perangkat lokal!";
+                return;
+            }
+
+            // Post to Google Apps Script Webhook URL
+            fetch(gameState.webhookUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(() => {
+                syncIcon.className = "fa-solid fa-circle-check text-emerald-400";
+                syncText.innerText = "Berhasil dikirim dan tersimpan otomatis ke Google Spreadsheet!";
+            }).catch(err => {
+                syncIcon.className = "fa-solid fa-triangle-exclamation text-amber-400";
+                syncText.innerText = "Tersimpan lokal. (Gagal terhubung ke Webhook URL)";
+            });
+        }
+
+        /* ==========================================================================
+           7. PEMBAHASAN SOAL & CERTIFICATE TAB CONTROL
+           ========================================================================== */
+        function switchTab(tabName) {
+            playClickSound();
+            const tabDisc = document.getElementById('tabDiscussion');
+            const tabCert = document.getElementById('tabCertificate');
+
+            if (tabName === 'discussion') {
+                tabDisc.classList.remove('hidden');
+                tabCert.classList.add('hidden');
+            } else {
+                tabCert.classList.remove('hidden');
+                tabDisc.classList.add('hidden');
+            }
+        }
+
+        function renderDiscussionCards(filterLevel = 0) {
+            const container = document.getElementById('discussionCardsContainer');
+            container.innerHTML = '';
+
+            allQuestions.forEach((q, idx) => {
+                if (filterLevel !== 0 && q.levelNum !== filterLevel) return;
+
+                const userAns = gameState.answers[idx];
+                const isCorrect = userAns ? userAns.isCorrect : false;
+                const userSelectedIdx = userAns ? userAns.selectedOption : -1;
+
+                const card = document.createElement('div');
+                card.className = `p-5 rounded-2xl border ${isCorrect ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-rose-500/30 bg-rose-950/10'} space-y-3 animate-pop-in`;
+
+                const optionLabels = ['A', 'B', 'C', 'D'];
+                const correctText = q.options[q.answer];
+                const userText = userSelectedIdx >= 0 ? q.options[userSelectedIdx] : "Tidak Dijawab (Waktu Habis)";
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">
+                            Level ${q.levelNum} • Soal #${idx + 1} (${isCorrect ? 'BENAR' : 'SALAH'})
+                        </span>
+                        <span class="text-xs text-slate-400 font-bold">${q.category}</span>
+                    </div>
+
+                    <h4 class="text-sm font-bold text-slate-100">${idx + 1}. ${q.q}</h4>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs pt-1">
+                        <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                            <span class="text-slate-400 block font-semibold mb-0.5">Jawaban Kamu:</span>
+                            <span class="font-bold ${isCorrect ? 'text-emerald-400' : 'text-rose-400'}">${userSelectedIdx >= 0 ? optionLabels[userSelectedIdx] + '. ' : ''}${userText}</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                            <span class="text-slate-400 block font-semibold mb-0.5">Kunci Jawaban Benar:</span>
+                            <span class="font-bold text-emerald-400">${optionLabels[q.answer]}. ${correctText}</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+                        <p class="font-bold text-sky-400 mb-1"><i class="fa-solid fa-lightbulb mr-1"></i>Pembahasan:</p>
+                        ${q.explanation}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterDiscussion(lvl) {
+            playClickSound();
+            for (let i = 0; i <= 3; i++) {
+                const btn = document.getElementById(`filterL${i}`);
+                if (i === lvl) {
+                    btn.className = "px-3 py-1 bg-sky-500 text-white rounded-lg text-xs font-bold";
+                } else {
+                    btn.className = "px-3 py-1 bg-slate-800 text-slate-400 rounded-lg text-xs font-bold";
+                }
+            }
+            renderDiscussionCards(lvl);
+        }
+
+        function resetGame() {
+            playClickSound();
+            gameState.currentQuestionIdx = 0;
+            gameState.score = 0;
+            gameState.answers = [];
+
+            transitionBetweenScreens('screenResult', 'screenStart');
+        }
+
+        /* Webhook Config Modal Logic */
+        function openConfigModal() {
+            playClickSound();
+            document.getElementById('inputWebhookUrl').value = gameState.webhookUrl;
+            document.getElementById('configModal').classList.remove('hidden');
+        }
+
+        function closeConfigModal() {
+            playClickSound();
+            document.getElementById('configModal').classList.add('hidden');
+        }
+
+        function saveWebhookConfig() {
+            playClickSound();
+            const url = document.getElementById('inputWebhookUrl').value;
+            gameState.webhookUrl = url;
+            localStorage.setItem('ips_webhook_url', url);
+            closeConfigModal();
+        }
+    </script>
+</body>
+</html>
